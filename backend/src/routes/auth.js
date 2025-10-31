@@ -7,7 +7,7 @@ const router = express.Router();
 // Inscription utilisateur
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, nom, prenom, age, ville } = req.body;
+    const { email, password, nom, prenom, date_naissance, ville } = req.body;
 
     const [rows] = await db.query('SELECT * FROM utilisateur WHERE email = ?', [
       email,
@@ -20,8 +20,8 @@ router.post('/register', async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
     await db.query(
-      'INSERT INTO utilisateur (email, hash_mdp, nom, prenom, age, ville) VALUES (?, ?, ?, ?, ?, ?)',
-      [email, hash, nom, prenom, age, ville]
+      'INSERT INTO utilisateur (email, hash_mdp, nom, prenom, date_naissance, ville) VALUES (?, ?, ?, ?, ?, ?)',
+      [email, hash, nom, prenom, date_naissance, ville]
     );
 
     res.status(201).json({ message: 'Utilisateur inscrit avec succès.' });
