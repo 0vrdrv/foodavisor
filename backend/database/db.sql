@@ -66,7 +66,7 @@ CREATE TABLE utilisateur (
     hash_mdp VARCHAR(255) NOT NULL,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
-    age TINYINT UNSIGNED,
+    date_naissance DATE,
     ville VARCHAR(120),
     date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,
     actif TINYINT(1) DEFAULT 1
@@ -2484,7 +2484,7 @@ INSERT INTO
         hash_mdp,
         nom,
         prenom,
-        age,
+        date_naissance,
         ville
     )
 VALUES (
@@ -2492,7 +2492,7 @@ VALUES (
         'hash1',
         'Admin',
         'Alpha',
-        32,
+        '1992-05-15',
         'Paris'
     ),
     (
@@ -2500,7 +2500,7 @@ VALUES (
         'hash2',
         'Admin',
         'Beta',
-        29,
+        '1995-08-22',
         'Lyon'
     ),
     (
@@ -11368,7 +11368,7 @@ BEGIN
     WHERE s.utilisateur_id = p_utilisateur;
 END$$
 
-DELIMITER ;
+DELIMITER;
 
 -- === Triggers ===
 DELIMITER $$
@@ -11385,7 +11385,7 @@ CREATE TRIGGER trg_stock_au AFTER UPDATE ON stock
     VALUES (NEW.utilisateur_id, NEW.ingredient_id, NEW.quantite - OLD.quantite, NEW.unite_code, 'correction');
 $$
 
-DELIMITER ;
+DELIMITER;
 
 -- ==========================================================
 -- Étape 5 : Vérifications & statistiques
