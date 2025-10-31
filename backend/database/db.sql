@@ -11368,7 +11368,7 @@ BEGIN
     WHERE s.utilisateur_id = p_utilisateur;
 END$$
 
-DELIMITER;
+DELIMITER ;
 
 -- === Triggers ===
 DELIMITER $$
@@ -11385,7 +11385,7 @@ CREATE TRIGGER trg_stock_au AFTER UPDATE ON stock
     VALUES (NEW.utilisateur_id, NEW.ingredient_id, NEW.quantite - OLD.quantite, NEW.unite_code, 'correction');
 $$
 
-DELIMITER;
+DELIMITER ;
 
 -- ==========================================================
 -- Étape 5 : Vérifications & statistiques
