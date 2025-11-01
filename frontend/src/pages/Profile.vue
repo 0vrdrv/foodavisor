@@ -1,5 +1,7 @@
 <template>
-  <UserCard />
+  <div class="profile-container">
+    <UserCard />
+  </div>
 </template>
 
 <script setup>
