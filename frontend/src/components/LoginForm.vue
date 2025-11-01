@@ -45,7 +45,11 @@ const loginUser = async () => {
     message.value = res.data.message || 'Connexion réussie !'
 
     if (res.status === 200) {
-      router.push('/')
+      // Sauvegarder le token dans localStorage
+      localStorage.setItem('token', res.data.token)
+
+      // Rediriger vers le profil
+      router.push('/profile')
     }
   } catch (err) {
     message.value = err.response?.data?.message || 'Erreur serveur'
