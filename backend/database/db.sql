@@ -1,12 +1,4 @@
--- ==========================================================
---  FOODADVISOR - INSTALLATION COMPLÈTE (VERSION FINALE)
---  Auteur : Sefa TAS & Minel KUJUNDZIC
---  Date : 2025-10-11
---  Description : Installation complète + données massives + procédures + vues + triggers
--- ==========================================================
-
--- Étape 1 : Création / Réinitialisation
-DROP DATABASE IF EXISTS foodadvisor;
+-- Étape 1 : Création / RéinitialisationDROP DATABASE IF EXISTS foodadvisor;
 
 CREATE DATABASE foodadvisor CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
