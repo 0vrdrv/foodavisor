@@ -2,7 +2,7 @@ const { validationResult } = require("express-validator");
 const db = require("../config/db");
 
 // ----------------------------------------------------
-// GET /api/recettes
+// GET /recettes
 // ----------------------------------------------------
 async function list(req, res, next) {
   try {
@@ -24,7 +24,7 @@ async function list(req, res, next) {
 }
 
 // ----------------------------------------------------
-// GET /api/recettes/:id
+// GET /recettes/:id
 // ----------------------------------------------------
 async function getById(req, res, next) {
   try {
@@ -79,7 +79,7 @@ async function getById(req, res, next) {
 }
 
 // ----------------------------------------------------
-// POST /api/recettes
+// POST /recettes
 // ----------------------------------------------------
 async function create(req, res, next) {
   const errors = validationResult(req);
@@ -142,7 +142,7 @@ async function create(req, res, next) {
 }
 
 // ----------------------------------------------------
-// PUT /api/recettes/:id
+// PUT /recettes/:id
 // ----------------------------------------------------
 async function update(req, res, next) {
   const { id } = req.params;
@@ -212,7 +212,7 @@ async function update(req, res, next) {
 }
 
 // ----------------------------------------------------
-// DELETE /api/recettes/:id
+// DELETE /recettes/:id
 // ----------------------------------------------------
 async function remove(req, res, next) {
   try {

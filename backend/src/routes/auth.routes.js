@@ -5,7 +5,7 @@ const { authRequired } = require("../middlewares/auth");
 
 const router = express.Router();
 
-// POST /api/auth/register
+// POST /auth/register
 router.post(
   "/register",
   [
@@ -17,7 +17,7 @@ router.post(
   controller.register
 );
 
-// POST /api/auth/login
+// POST /auth/login
 router.post(
   "/login",
   [
@@ -27,7 +27,7 @@ router.post(
   controller.login
 );
 
-// GET /api/auth/me
+// GET /auth/me
 router.get("/me", authRequired, controller.me);
 
 module.exports = router;
