@@ -20,7 +20,7 @@ router.post(
     body("prot_100g").optional().isFloat(),
     body("gluc_100g").optional().isFloat(),
     body("lip_100g").optional().isFloat(),
-    body("prix_ref").optional().isFloat(),
+    body("prix_unitaire").optional().isFloat(),
   ],
   controller.create
 );

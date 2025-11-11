@@ -1,4 +1,6 @@
+-- Active: 1762080270873@@127.0.0.1@3306@foodadvisor
 -- Étape 1 : Création / RéinitialisationDROP DATABASE IF EXISTS foodadvisor;
+DROP DATABASE IF EXISTS foodadvisor;
 
 CREATE DATABASE foodadvisor CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -7,7 +9,7 @@ USE foodadvisor;
 -- Désactivation temporaire des FK
 SET FOREIGN_KEY_CHECKS = 0;
 
--- Suppression propre de tous les objets (dans l’ordre logique)
+-- Suppression propre de tous les objets
 DROP VIEW IF EXISTS v_recette_note;
 
 DROP VIEW IF EXISTS v_prix_courant;
@@ -47,18 +49,24 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- Étape 2 : Création du schéma (DDL)
 -- ==========================================================
 
+-- ----------------------------------------------------------
+-- RÔLES
+-- ----------------------------------------------------------
 CREATE TABLE role (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(30) NOT NULL UNIQUE
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- UTILISATEUR
+-- ----------------------------------------------------------
 CREATE TABLE utilisateur (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(190) NOT NULL UNIQUE,
     hash_mdp VARCHAR(255) NOT NULL,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
-    age TINYINT UNSIGNED,
+    date_naissance DATE NULL,
     ville VARCHAR(120),
     date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,
     actif TINYINT(1) DEFAULT 1
@@ -72,12 +80,10 @@ CREATE TABLE utilisateur_role (
     FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- CATÉGORIES & UNITÉS
+-- ----------------------------------------------------------
 CREATE TABLE categorie_ingredient (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    libelle VARCHAR(120) NOT NULL UNIQUE
-) ENGINE = InnoDB;
-
-CREATE TABLE allergene (
     id INT AUTO_INCREMENT PRIMARY KEY,
     libelle VARCHAR(120) NOT NULL UNIQUE
 ) ENGINE = InnoDB;
@@ -88,6 +94,14 @@ CREATE TABLE unite (
     type ENUM('masse', 'volume', 'piece') NOT NULL
 ) ENGINE = InnoDB;
 
+CREATE TABLE allergene (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    libelle VARCHAR(120) NOT NULL UNIQUE
+) ENGINE = InnoDB;
+
+-- ----------------------------------------------------------
+-- INGRÉDIENTS
+-- ----------------------------------------------------------
 CREATE TABLE ingredient (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(190) NOT NULL UNIQUE,
@@ -96,7 +110,7 @@ CREATE TABLE ingredient (
     prot_100g DECIMAL(6, 2),
     gluc_100g DECIMAL(6, 2),
     lip_100g DECIMAL(6, 2),
-    prix_ref DECIMAL(8, 2),
+    prix_unitaire DECIMAL(8, 2),
     FOREIGN KEY (categorie_id) REFERENCES categorie_ingredient (id)
 ) ENGINE = InnoDB;
 
@@ -117,6 +131,9 @@ CREATE TABLE prix_ingredient (
     FOREIGN KEY (ingredient_id) REFERENCES ingredient (id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- RECETTES
+-- ----------------------------------------------------------
 CREATE TABLE recette (
     id INT AUTO_INCREMENT PRIMARY KEY,
     auteur_id INT NOT NULL,
@@ -149,6 +166,9 @@ CREATE TABLE recette_ingredient (
     FOREIGN KEY (unite_code) REFERENCES unite (code)
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- STOCKS ET MOUVEMENTS
+-- ----------------------------------------------------------
 CREATE TABLE stock (
     utilisateur_id INT NOT NULL,
     ingredient_id INT NOT NULL,
@@ -180,6 +200,9 @@ CREATE TABLE mvt_stock (
     FOREIGN KEY (unite_code) REFERENCES unite (code)
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- RÉGIMES
+-- ----------------------------------------------------------
 CREATE TABLE regime (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(40) NOT NULL UNIQUE,
@@ -191,9 +214,12 @@ CREATE TABLE utilisateur_regime (
     regime_id INT NOT NULL,
     PRIMARY KEY (utilisateur_id, regime_id),
     FOREIGN KEY (utilisateur_id) REFERENCES utilisateur (id) ON DELETE CASCADE,
-    FOREIGN KEY (regime_id) REFERENCES regime (id)
+    FOREIGN KEY (regime_id) REFERENCES regime (id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- HISTORIQUE DES CUISSONS
+-- ----------------------------------------------------------
 CREATE TABLE historique_cuisson (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     utilisateur_id INT NOT NULL,
@@ -204,6 +230,9 @@ CREATE TABLE historique_cuisson (
     FOREIGN KEY (recette_id) REFERENCES recette (id)
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- AVIS SUR LES RECETTES
+-- ----------------------------------------------------------
 CREATE TABLE avis (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     utilisateur_id INT NOT NULL,
@@ -216,6 +245,9 @@ CREATE TABLE avis (
     FOREIGN KEY (recette_id) REFERENCES recette (id)
 ) ENGINE = InnoDB;
 
+-- ----------------------------------------------------------
+-- LISTE DE COURSES
+-- ----------------------------------------------------------
 CREATE TABLE liste_course (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     utilisateur_id INT NOT NULL,
@@ -234,6 +266,15 @@ CREATE TABLE liste_course_item (
     FOREIGN KEY (ingredient_id) REFERENCES ingredient (id),
     FOREIGN KEY (unite_code) REFERENCES unite (code)
 ) ENGINE = InnoDB;
+
+ALTER TABLE recette
+ADD COLUMN image_url VARCHAR(255) NULL AFTER description;
+
+ALTER TABLE ingredient
+ADD COLUMN image_url VARCHAR(255) NULL AFTER nom;
+
+ALTER TABLE categorie_ingredient
+ADD COLUMN image_url VARCHAR(255) NULL AFTER libelle;
 
 -- ==========================================================
 -- Étape 3 : Données factices massives
@@ -320,7 +361,7 @@ INSERT INTO
         prot_100g,
         gluc_100g,
         lip_100g,
-        prix_ref
+        prix_unitaire
     )
 VALUES (
         'Tomate',
@@ -2476,7 +2517,7 @@ INSERT INTO
         hash_mdp,
         nom,
         prenom,
-        age,
+        date_naissance,
         ville
     )
 VALUES (
@@ -2484,7 +2525,7 @@ VALUES (
         'hash1',
         'Admin',
         'Alpha',
-        32,
+        '1993-04-12',
         'Paris'
     ),
     (
@@ -2492,7 +2533,7 @@ VALUES (
         'hash2',
         'Admin',
         'Beta',
-        29,
+        '1996-07-08',
         'Lyon'
     ),
     (
@@ -2500,7 +2541,7 @@ VALUES (
         'hashu',
         'Nguyen',
         'Noah',
-        35,
+        '1990-11-22',
         'Colmar'
     ),
     (
@@ -2508,7 +2549,7 @@ VALUES (
         'hashu',
         'Petitjean',
         'Jade',
-        54,
+        '1971-09-17',
         'Paris'
     ),
     (
@@ -2516,7 +2557,7 @@ VALUES (
         'hashu',
         'Bernard',
         'Adam',
-        19,
+        '2006-02-15',
         'Colmar'
     ),
     (
@@ -2524,7 +2565,7 @@ VALUES (
         'hashu',
         'Moreau',
         'Mohamed',
-        49,
+        '1976-12-09',
         'Besançon'
     ),
     (
@@ -2532,7 +2573,7 @@ VALUES (
         'hashu',
         'Rousseau',
         'Sami',
-        39,
+        '1986-05-04',
         'Dijon'
     ),
     (
@@ -2540,7 +2581,7 @@ VALUES (
         'hashu',
         'Rousseau',
         'Nina',
-        53,
+        '1970-08-20',
         'Strasbourg'
     ),
     (
@@ -2548,7 +2589,7 @@ VALUES (
         'hashu',
         'Nguyen',
         'Eva',
-        33,
+        '1992-06-11',
         'Reims'
     ),
     (
@@ -2556,7 +2597,7 @@ VALUES (
         'hashu',
         'Garcia',
         'Chloé',
-        48,
+        '1975-03-10',
         'Colmar'
     ),
     (
@@ -2564,7 +2605,7 @@ VALUES (
         'hashu',
         'Dupont',
         'Sami',
-        23,
+        '2002-07-05',
         'Dijon'
     ),
     (
@@ -2572,7 +2613,7 @@ VALUES (
         'hashu',
         'Garcia',
         'Adam',
-        37,
+        '1988-01-28',
         'Paris'
     ),
     (
@@ -2580,7 +2621,7 @@ VALUES (
         'hashu',
         'Poirier',
         'Hugo',
-        51,
+        '1972-09-23',
         'Nancy'
     ),
     (
@@ -2588,7 +2629,7 @@ VALUES (
         'hashu',
         'Poirier',
         'Inès',
-        39,
+        '1986-12-18',
         'Nancy'
     ),
     (
@@ -2596,7 +2637,7 @@ VALUES (
         'hashu',
         'Rousseau',
         'Amina',
-        37,
+        '1988-03-03',
         'Dijon'
     ),
     (
@@ -2604,7 +2645,7 @@ VALUES (
         'hashu',
         'Lemoine',
         'Paul',
-        38,
+        '1987-11-09',
         'Belfort'
     ),
     (
@@ -2612,7 +2653,7 @@ VALUES (
         'hashu',
         'Moreau',
         'Chloé',
-        30,
+        '1995-05-25',
         'Besançon'
     ),
     (
@@ -2620,7 +2661,7 @@ VALUES (
         'hashu',
         'Rousseau',
         'Hugo',
-        55,
+        '1970-01-14',
         'Metz'
     ),
     (
@@ -2628,7 +2669,7 @@ VALUES (
         'hashu',
         'Durand',
         'Liam',
-        30,
+        '1995-03-30',
         'Dijon'
     ),
     (
@@ -2636,7 +2677,7 @@ VALUES (
         'hashu',
         'Moreau',
         'Sofia',
-        37,
+        '1988-04-22',
         'Strasbourg'
     ),
     (
@@ -2644,7 +2685,7 @@ VALUES (
         'hashu',
         'Petit',
         'Chloé',
-        35,
+        '1990-07-19',
         'Strasbourg'
     ),
     (
@@ -2652,7 +2693,7 @@ VALUES (
         'hashu',
         'Poirier',
         'Lucas',
-        36,
+        '1989-10-10',
         'Mulhouse'
     ),
     (
@@ -2660,7 +2701,7 @@ VALUES (
         'hashu',
         'Marchand',
         'Youssef',
-        24,
+        '1999-09-04',
         'Strasbourg'
     ),
     (
@@ -2668,7 +2709,7 @@ VALUES (
         'hashu',
         'Marchand',
         'Liam',
-        48,
+        '1976-02-17',
         'Colmar'
     ),
     (
@@ -2676,7 +2717,7 @@ VALUES (
         'hashu',
         'Martin',
         'Yanis',
-        34,
+        '1989-12-14',
         'Colmar'
     ),
     (
@@ -2684,7 +2725,7 @@ VALUES (
         'hashu',
         'Nguyen',
         'Léna',
-        43,
+        '1982-04-06',
         'Colmar'
     ),
     (
@@ -2692,7 +2733,7 @@ VALUES (
         'hashu',
         'Martin',
         'Tom',
-        27,
+        '1998-09-01',
         'Mulhouse'
     ),
     (
@@ -2700,7 +2741,7 @@ VALUES (
         'hashu',
         'Bonnet',
         'Tom',
-        23,
+        '2002-11-27',
         'Besançon'
     ),
     (
@@ -2708,7 +2749,7 @@ VALUES (
         'hashu',
         'Richard',
         'Chloé',
-        32,
+        '1993-08-16',
         'Metz'
     ),
     (
@@ -2716,7 +2757,7 @@ VALUES (
         'hashu',
         'Petitjean',
         'Amina',
-        37,
+        '1988-10-20',
         'Paris'
     );
 
@@ -11286,6 +11327,174 @@ VALUES (3, 22, 2),
     (29, 27, 2),
     (30, 8, 1);
 
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/766/766610.png'
+WHERE
+    libelle LIKE '%Légume%';
+
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/1082/1082343.png'
+WHERE
+    libelle LIKE '%Fruit%';
+
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/3082/3082031.png'
+WHERE
+    libelle LIKE '%Viande%';
+
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/2743/2743475.png'
+WHERE
+    libelle LIKE '%Poisson%';
+
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/1998/1998610.png'
+WHERE
+    libelle LIKE '%Céréale%';
+
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/1046/1046784.png'
+WHERE
+    libelle LIKE '%Produit laitier%';
+
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/135/135680.png'
+WHERE
+    libelle LIKE '%Condiment%';
+
+UPDATE categorie_ingredient
+SET
+    image_url = 'https://cdn-icons-png.flaticon.com/512/3399/3399885.png'
+WHERE
+    libelle LIKE '%Autre%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1617196034796-73dfdd9df37b'
+WHERE
+    nom LIKE '%Riz%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1604909053197-7b82e9c5b39b'
+WHERE
+    nom LIKE '%Poulet%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1589308078054-8325b56ad25f'
+WHERE
+    nom LIKE '%Tomate%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1617196034796-73dfdd9df37b'
+WHERE
+    nom LIKE '%Pâtes%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f'
+WHERE
+    nom LIKE '%Oeuf%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1625944230940-bf6b056a9e53'
+WHERE
+    nom LIKE '%Lait%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1601050690597-2df6e92a6f6f'
+WHERE
+    nom LIKE '%Beurre%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1617195737078-8cbb890e0e24'
+WHERE
+    nom LIKE '%Sel%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1617195737078-8cbb890e0e24'
+WHERE
+    nom LIKE '%Poivre%';
+
+UPDATE ingredient
+SET
+    image_url = 'https://images.unsplash.com/photo-1589308078054-8325b56ad25f'
+WHERE
+    nom LIKE '%Oignon%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1601924638867-3ec0e42eae68'
+WHERE
+    titre LIKE '%Pâtes%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1604909053197-7b82e9c5b39b'
+WHERE
+    titre LIKE '%Poulet%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1589308078054-8325b56ad25f'
+WHERE
+    titre LIKE '%Tomate%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1607119905819-1c9d94e57a4a'
+WHERE
+    titre LIKE '%Salade%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1605478571959-6f1a1bb2a8d0'
+WHERE
+    titre LIKE '%Tiramisu%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1565958011705-44e211a1c9ea'
+WHERE
+    titre LIKE '%Soupe%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1613567959477-06b3799d86e6'
+WHERE
+    titre LIKE '%Pizza%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1617196034796-73dfdd9df37b'
+WHERE
+    titre LIKE '%Riz%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1606788075761-3e298af2124c'
+WHERE
+    titre LIKE '%Curry%';
+
+UPDATE recette
+SET
+    image_url = 'https://images.unsplash.com/photo-1632824096954-4fbe8b8282a5'
+WHERE
+    titre LIKE '%Carbonara%';
+
 -- ==========================================================
 -- Étape 4 : Création des vues, procédure et triggers
 -- ==========================================================
@@ -11326,7 +11535,9 @@ FROM prix_ingredient p1
 
 CREATE OR REPLACE VIEW v_cout_recette AS
 SELECT ri.recette_id, SUM(
-        ri.quantite * IFNULL(vp.prix_unitaire, i.prix_ref)
+        ri.quantite * IFNULL(
+            vp.prix_unitaire, i.prix_unitaire
+        )
     ) AS cout_estime
 FROM
     recette_ingredient ri

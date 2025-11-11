@@ -8,7 +8,7 @@ async function list(req, res, next) {
   try {
     const [rows] = await db.query(`
       SELECT i.id, i.nom, c.libelle AS categorie,
-             i.kcal_100g, i.prot_100g, i.gluc_100g, i.lip_100g, i.prix_ref
+             i.kcal_100g, i.prot_100g, i.gluc_100g, i.lip_100g, i.prix_unitaire
       FROM ingredient i
       JOIN categorie_ingredient c ON c.id = i.categorie_id
       ORDER BY i.nom ASC
@@ -88,7 +88,7 @@ async function create(req, res, next) {
     prot_100g,
     gluc_100g,
     lip_100g,
-    prix_ref,
+    prix_unitaire,
     allergenes,
   } = req.body;
 
@@ -97,10 +97,10 @@ async function create(req, res, next) {
 
     const [result] = await db.query(
       `
-      INSERT INTO ingredient (nom, categorie_id, kcal_100g, prot_100g, gluc_100g, lip_100g, prix_ref)
+      INSERT INTO ingredient (nom, categorie_id, kcal_100g, prot_100g, gluc_100g, lip_100g, prix_unitaire)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
-      [nom, categorie_id, kcal_100g, prot_100g, gluc_100g, lip_100g, prix_ref]
+      [nom, categorie_id, kcal_100g, prot_100g, gluc_100g, lip_100g, prix_unitaire]
     );
 
     const ingredient_id = result.insertId;
@@ -135,7 +135,7 @@ async function update(req, res, next) {
     prot_100g,
     gluc_100g,
     lip_100g,
-    prix_ref,
+    prix_unitaire,
     allergenes,
   } = req.body;
 
@@ -151,7 +151,7 @@ async function update(req, res, next) {
           prot_100g = COALESCE(?, prot_100g),
           gluc_100g = COALESCE(?, gluc_100g),
           lip_100g = COALESCE(?, lip_100g),
-          prix_ref = COALESCE(?, prix_ref)
+          prix_unitaire = COALESCE(?, prix_unitaire)
       WHERE id = ?
     `,
       [
@@ -161,7 +161,7 @@ async function update(req, res, next) {
         prot_100g,
         gluc_100g,
         lip_100g,
-        prix_ref,
+        prix_unitaire,
         req.params.id,
       ]
     );
