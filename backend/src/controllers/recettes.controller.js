@@ -2,20 +2,28 @@ const { validationResult } = require("express-validator");
 const db = require("../config/db");
 
 // ----------------------------------------------------
-// GET /api/recettes
+// GET /recettes → liste des recettes
 // ----------------------------------------------------
 async function list(req, res, next) {
   try {
     const [rows] = await db.query(`
-      SELECT r.id, r.nom, r.description, r.difficulte, 
-             r.temps_preparation, r.temps_cuisson, r.nb_personnes,
+      SELECT r.id,
+             r.titre,
+             r.description,
+             r.image_url,
+             r.note_cache,
+             r.date_creation,
+             u.prenom AS auteur_prenom,
+             u.nom AS auteur_nom,
              COUNT(ri.ingredient_id) AS nb_ingredients,
-             AVG(a.note) AS note_moyenne
+             ROUND(AVG(a.note), 2) AS note_moyenne
       FROM recette r
+      JOIN utilisateur u ON u.id = r.auteur_id
       LEFT JOIN recette_ingredient ri ON ri.recette_id = r.id
       LEFT JOIN avis a ON a.recette_id = r.id
+      WHERE r.publie = 1
       GROUP BY r.id
-      ORDER BY r.nom ASC
+      ORDER BY r.date_creation DESC
     `);
     res.json(rows);
   } catch (err) {
@@ -24,62 +32,75 @@ async function list(req, res, next) {
 }
 
 // ----------------------------------------------------
-// GET /api/recettes/:id
+// GET /recettes/:id → détail complet
 // ----------------------------------------------------
 async function getById(req, res, next) {
   try {
-    const [rows] = await db.query(
-      `SELECT * FROM recette WHERE id = ?`,
-      [req.params.id]
+    const recetteId = req.params.id;
+
+    // Récupération de la recette principale
+    const [recetteRows] = await db.query(
+      `
+      SELECT r.*, u.nom AS auteur_nom, u.prenom AS auteur_prenom
+      FROM recette r
+      JOIN utilisateur u ON u.id = r.auteur_id
+      WHERE r.id = ?
+    `,
+      [recetteId]
     );
 
-    if (rows.length === 0) {
+    if (recetteRows.length === 0) {
       return res.status(404).json({ message: "Recette introuvable" });
     }
 
-    const recette = rows[0];
+    const recette = recetteRows[0];
 
-    // Ingrédients associés
+    // Ingrédients
     const [ingredients] = await db.query(
       `
-      SELECT i.id, i.nom, ri.quantite, u.libelle AS unite
+      SELECT i.id, i.nom, i.image_url, ri.quantite, ri.unite_code
       FROM recette_ingredient ri
       JOIN ingredient i ON i.id = ri.ingredient_id
-      LEFT JOIN unite u ON u.code = i.unite_code
       WHERE ri.recette_id = ?
     `,
-      [req.params.id]
+      [recetteId]
     );
 
     // Étapes
     const [etapes] = await db.query(
       `
-      SELECT id, numero, description
+      SELECT ord, description
       FROM etape_recette
       WHERE recette_id = ?
-      ORDER BY numero ASC
+      ORDER BY ord ASC
     `,
-      [req.params.id]
+      [recetteId]
     );
 
-    // Moyenne des avis
+    // Avis (si présents)
     const [avis] = await db.query(
-      `SELECT note, commentaire FROM avis WHERE recette_id = ?`,
-      [req.params.id]
+      `
+      SELECT a.note, a.commentaire, u.prenom, u.nom
+      FROM avis a
+      JOIN utilisateur u ON u.id = a.utilisateur_id
+      WHERE a.recette_id = ?
+    `,
+      [recetteId]
     );
 
-    recette.ingredients = ingredients;
-    recette.etapes = etapes;
-    recette.avis = avis;
-
-    res.json(recette);
+    res.json({
+      ...recette,
+      ingredients,
+      etapes,
+      avis,
+    });
   } catch (err) {
     next(err);
   }
 }
 
 // ----------------------------------------------------
-// POST /api/recettes
+// POST /recettes → création (ADMIN)
 // ----------------------------------------------------
 async function create(req, res, next) {
   const errors = validationResult(req);
@@ -87,47 +108,44 @@ async function create(req, res, next) {
     return res.status(422).json({ errors: errors.array() });
   }
 
-  const {
-    nom,
-    description,
-    difficulte,
-    temps_preparation,
-    temps_cuisson,
-    nb_personnes,
-    ingredients,
-    etapes
-  } = req.body;
+  const { titre, description, image_url, personnes_defaut, ingredients, etapes } =
+    req.body;
 
   try {
     await db.query("START TRANSACTION");
 
+    // Insertion de la recette
     const [result] = await db.query(
       `
-      INSERT INTO recette (nom, description, difficulte, temps_preparation, temps_cuisson, nb_personnes)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO recette (auteur_id, titre, description, image_url, personnes_defaut)
+      VALUES (?, ?, ?, ?, COALESCE(?, 2))
     `,
-      [nom, description, difficulte, temps_preparation, temps_cuisson, nb_personnes || null]
+      [req.user.id, titre, description || null, image_url || null, personnes_defaut]
     );
 
     const recetteId = result.insertId;
 
-    // Insertion des ingrédients (table recette_ingredient)
+    // Insertion des ingrédients
     if (Array.isArray(ingredients)) {
       for (const ing of ingredients) {
         await db.query(
-          `INSERT INTO recette_ingredient (recette_id, ingredient_id, quantite)
-           VALUES (?, ?, ?)`,
-          [recetteId, ing.ingredient_id, ing.quantite]
+          `
+          INSERT INTO recette_ingredient (recette_id, ingredient_id, quantite, unite_code)
+          VALUES (?, ?, ?, ?)
+        `,
+          [recetteId, ing.ingredient_id, ing.quantite, ing.unite_code]
         );
       }
     }
 
-    // Insertion des étapes (table etape_recette)
+    // Insertion des étapes
     if (Array.isArray(etapes)) {
       for (const [index, etape] of etapes.entries()) {
         await db.query(
-          `INSERT INTO etape_recette (recette_id, numero, description)
-           VALUES (?, ?, ?)`,
+          `
+          INSERT INTO etape_recette (recette_id, ord, description)
+          VALUES (?, ?, ?)
+        `,
           [recetteId, index + 1, etape.description]
         );
       }
@@ -142,20 +160,12 @@ async function create(req, res, next) {
 }
 
 // ----------------------------------------------------
-// PUT /api/recettes/:id
+// PUT /recettes/:id → modification (ADMIN)
 // ----------------------------------------------------
 async function update(req, res, next) {
   const { id } = req.params;
-  const {
-    nom,
-    description,
-    difficulte,
-    temps_preparation,
-    temps_cuisson,
-    nb_personnes,
-    ingredients,
-    etapes
-  } = req.body;
+  const { titre, description, image_url, personnes_defaut, ingredients, etapes } =
+    req.body;
 
   try {
     await db.query("START TRANSACTION");
@@ -163,15 +173,13 @@ async function update(req, res, next) {
     const [result] = await db.query(
       `
       UPDATE recette
-      SET nom = COALESCE(?, nom),
+      SET titre = COALESCE(?, titre),
           description = COALESCE(?, description),
-          difficulte = COALESCE(?, difficulte),
-          temps_preparation = COALESCE(?, temps_preparation),
-          temps_cuisson = COALESCE(?, temps_cuisson),
-          nb_personnes = COALESCE(?, nb_personnes)
+          image_url = COALESCE(?, image_url),
+          personnes_defaut = COALESCE(?, personnes_defaut)
       WHERE id = ?
     `,
-      [nom, description, difficulte, temps_preparation, temps_cuisson, nb_personnes, id]
+      [titre, description, image_url, personnes_defaut, id]
     );
 
     if (result.affectedRows === 0) {
@@ -184,9 +192,11 @@ async function update(req, res, next) {
       await db.query("DELETE FROM recette_ingredient WHERE recette_id = ?", [id]);
       for (const ing of ingredients) {
         await db.query(
-          `INSERT INTO recette_ingredient (recette_id, ingredient_id, quantite)
-           VALUES (?, ?, ?)`,
-          [id, ing.ingredient_id, ing.quantite]
+          `
+          INSERT INTO recette_ingredient (recette_id, ingredient_id, quantite, unite_code)
+          VALUES (?, ?, ?, ?)
+        `,
+          [id, ing.ingredient_id, ing.quantite, ing.unite_code]
         );
       }
     }
@@ -196,8 +206,10 @@ async function update(req, res, next) {
       await db.query("DELETE FROM etape_recette WHERE recette_id = ?", [id]);
       for (const [index, etape] of etapes.entries()) {
         await db.query(
-          `INSERT INTO etape_recette (recette_id, numero, description)
-           VALUES (?, ?, ?)`,
+          `
+          INSERT INTO etape_recette (recette_id, ord, description)
+          VALUES (?, ?, ?)
+        `,
           [id, index + 1, etape.description]
         );
       }
@@ -212,11 +224,13 @@ async function update(req, res, next) {
 }
 
 // ----------------------------------------------------
-// DELETE /api/recettes/:id
+// DELETE /recettes/:id → suppression (ADMIN)
 // ----------------------------------------------------
 async function remove(req, res, next) {
   try {
-    const [result] = await db.query("DELETE FROM recette WHERE id = ?", [req.params.id]);
+    const [result] = await db.query("DELETE FROM recette WHERE id = ?", [
+      req.params.id,
+    ]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Recette introuvable" });
     }

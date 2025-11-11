@@ -15,6 +15,8 @@ router.put(
   [
     body("nom").optional().notEmpty(),
     body("prenom").optional().notEmpty(),
+    body("ville").optional().notEmpty(),
+    body("date_naissance").optional().isDate(),
     body("actif").optional().isBoolean(),
   ],
   controller.update

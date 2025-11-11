@@ -5,7 +5,7 @@ const { authRequired } = require("../middlewares/auth");
 
 const router = express.Router();
 
-// POST /api/auth/register
+// POST /auth/register
 router.post(
   "/register",
   [
@@ -13,21 +13,20 @@ router.post(
     body("password").isLength({ min: 6 }).withMessage("6 caractères min"),
     body("nom").notEmpty(),
     body("prenom").notEmpty(),
+    body("date_naissance").optional().isDate(),
+    body("ville").optional().isString(),
   ],
   controller.register
 );
 
-// POST /api/auth/login
+// POST /auth/login
 router.post(
   "/login",
-  [
-    body("email").isEmail(),
-    body("password").notEmpty()
-  ],
+  [body("email").isEmail(), body("password").notEmpty()],
   controller.login
 );
 
-// GET /api/auth/me
+// GET /auth/me
 router.get("/me", authRequired, controller.me);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-const controller = require("../controllers/recettes.controllers");
+const controller = require("../controllers/recettes.controller");
 const { authRequired, requireRole } = require("../middlewares/auth");
 
 const router = express.Router();
@@ -17,16 +17,15 @@ router.post(
   authRequired,
   requireRole("ADMIN"),
   [
-    body("nom").notEmpty(),
-    body("description").notEmpty(),
-    body("difficulte").isInt({ min: 1, max: 5 }),
-    body("temps_preparation").isInt(),
-    body("temps_cuisson").isInt()
+    body("titre").notEmpty(),
+    body("description").optional().isString(),
+    body("image_url").optional().isString(),
+    body("personnes_defaut").optional().isInt({ min: 1 }),
   ],
   controller.create
 );
 
-// Modification d'une recette
+// Modification d'une recette (ADMIN)
 router.put(
   "/:id",
   authRequired,
@@ -34,7 +33,7 @@ router.put(
   controller.update
 );
 
-// Suppression d'une recette
+// Suppression d'une recette (ADMIN)
 router.delete(
   "/:id",
   authRequired,
