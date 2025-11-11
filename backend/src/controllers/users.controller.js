@@ -1,10 +1,13 @@
 const { validationResult } = require("express-validator");
 const db = require("../config/db");
 
+// ----------------------------------------------------
+// GET /api/users (ADMIN)
+// ----------------------------------------------------
 async function list(req, res, next) {
   try {
     const [rows] = await db.query(
-      `SELECT id, email, nom, prenom, age, ville, date_inscription, actif
+      `SELECT id, email, nom, prenom, date_naissance, ville, date_inscription, actif
        FROM utilisateur
        ORDER BY date_inscription DESC`
     );
@@ -14,20 +17,21 @@ async function list(req, res, next) {
   }
 }
 
+// ----------------------------------------------------
+// GET /api/users/:id (ADMIN)
+// ----------------------------------------------------
 async function getById(req, res, next) {
   const id = req.params.id;
   try {
     const [rows] = await db.query(
-      `SELECT id, email, nom, prenom, age, ville, date_inscription, actif
+      `SELECT id, email, nom, prenom, date_naissance, ville, date_inscription, actif
        FROM utilisateur
        WHERE id = ?`,
       [id]
     );
-    if (rows.length === 0) {
+    if (rows.length === 0)
       return res.status(404).json({ message: "Utilisateur introuvable" });
-    }
 
-    // on ajoute ses rôles
     const [roles] = await db.query(
       `SELECT r.code
        FROM utilisateur_role ur
@@ -45,30 +49,37 @@ async function getById(req, res, next) {
   }
 }
 
+// ----------------------------------------------------
+// PUT /api/users/:id (ADMIN)
+// ----------------------------------------------------
 async function update(req, res, next) {
   const id = req.params.id;
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
-  const { nom, prenom, age, ville, actif } = req.body;
+  const { nom, prenom, date_naissance, ville, actif } = req.body;
 
   try {
     const [result] = await db.query(
       `UPDATE utilisateur 
        SET nom = COALESCE(?, nom),
            prenom = COALESCE(?, prenom),
-           age = COALESCE(?, age),
+           date_naissance = COALESCE(?, date_naissance),
            ville = COALESCE(?, ville),
            actif = COALESCE(?, actif)
        WHERE id = ?`,
-      [nom, prenom, age, ville, typeof actif === "boolean" ? (actif ? 1 : 0) : null, id]
+      [
+        nom,
+        prenom,
+        date_naissance,
+        ville,
+        typeof actif === "boolean" ? (actif ? 1 : 0) : null,
+        id,
+      ]
     );
 
-    if (result.affectedRows === 0) {
+    if (result.affectedRows === 0)
       return res.status(404).json({ message: "Utilisateur introuvable" });
-    }
 
     res.json({ message: "Utilisateur mis à jour" });
   } catch (err) {
@@ -76,25 +87,19 @@ async function update(req, res, next) {
   }
 }
 
+// ----------------------------------------------------
+// DELETE /api/users/:id (ADMIN)
+// ----------------------------------------------------
 async function remove(req, res, next) {
   const id = req.params.id;
   try {
-    const [result] = await db.query(
-      "DELETE FROM utilisateur WHERE id = ?",
-      [id]
-    );
-    if (result.affectedRows === 0) {
+    const [result] = await db.query("DELETE FROM utilisateur WHERE id = ?", [id]);
+    if (result.affectedRows === 0)
       return res.status(404).json({ message: "Utilisateur introuvable" });
-    }
     res.json({ message: "Utilisateur supprimé" });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = {
-  list,
-  getById,
-  update,
-  remove,
-};
+module.exports = { list, getById, update, remove };

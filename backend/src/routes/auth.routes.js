@@ -13,6 +13,8 @@ router.post(
     body("password").isLength({ min: 6 }).withMessage("6 caractères min"),
     body("nom").notEmpty(),
     body("prenom").notEmpty(),
+    body("date_naissance").optional().isDate(),
+    body("ville").optional().isString(),
   ],
   controller.register
 );
@@ -20,10 +22,7 @@ router.post(
 // POST /auth/login
 router.post(
   "/login",
-  [
-    body("email").isEmail(),
-    body("password").notEmpty()
-  ],
+  [body("email").isEmail(), body("password").notEmpty()],
   controller.login
 );
 

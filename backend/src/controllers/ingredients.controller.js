@@ -7,7 +7,7 @@ const db = require("../config/db");
 async function list(req, res, next) {
   try {
     const [rows] = await db.query(`
-      SELECT i.id, i.nom, c.libelle AS categorie,
+      SELECT i.id, i.nom, i.image_url, c.libelle AS categorie,
              i.kcal_100g, i.prot_100g, i.gluc_100g, i.lip_100g, i.prix_unitaire
       FROM ingredient i
       JOIN categorie_ingredient c ON c.id = i.categorie_id
@@ -35,11 +35,12 @@ async function getById(req, res, next) {
       [req.params.id]
     );
 
-    if (rows.length === 0) {
+    if (rows.length === 0)
       return res.status(404).json({ message: "Ingrédient introuvable" });
-    }
 
-    // récupérer les allergènes liés
+    const ingredient = rows[0];
+
+    // Allergenes liés
     const [allergenes] = await db.query(
       `
       SELECT a.id, a.libelle
@@ -50,7 +51,7 @@ async function getById(req, res, next) {
       [req.params.id]
     );
 
-    // récupérer l’historique des prix
+    // Historique des prix
     const [prix] = await db.query(
       `
       SELECT date_effet, prix_unitaire
@@ -62,7 +63,6 @@ async function getById(req, res, next) {
       [req.params.id]
     );
 
-    const ingredient = rows[0];
     ingredient.allergenes = allergenes;
     ingredient.historique_prix = prix;
 
@@ -73,13 +73,12 @@ async function getById(req, res, next) {
 }
 
 // ----------------------------------------------------
-// POST /api/ingredients
+// POST /api/ingredients (ADMIN)
 // ----------------------------------------------------
 async function create(req, res, next) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
+  if (!errors.isEmpty())
     return res.status(422).json({ errors: errors.array() });
-  }
 
   const {
     nom,
@@ -90,22 +89,33 @@ async function create(req, res, next) {
     lip_100g,
     prix_unitaire,
     allergenes,
+    image_url,
   } = req.body;
 
   try {
     await db.query("START TRANSACTION");
 
+    // Insertion de base
     const [result] = await db.query(
       `
-      INSERT INTO ingredient (nom, categorie_id, kcal_100g, prot_100g, gluc_100g, lip_100g, prix_unitaire)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO ingredient (nom, categorie_id, kcal_100g, prot_100g, gluc_100g, lip_100g, prix_unitaire, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
-      [nom, categorie_id, kcal_100g, prot_100g, gluc_100g, lip_100g, prix_unitaire]
+      [
+        nom,
+        categorie_id,
+        kcal_100g,
+        prot_100g,
+        gluc_100g,
+        lip_100g,
+        prix_unitaire,
+        image_url ?? null,
+      ]
     );
 
     const ingredient_id = result.insertId;
 
-    // associer allergènes s’ils existent
+    // Association allergènes (si présents)
     if (Array.isArray(allergenes)) {
       for (const id of allergenes) {
         await db.query(
@@ -125,7 +135,7 @@ async function create(req, res, next) {
 }
 
 // ----------------------------------------------------
-// PUT /api/ingredients/:id
+// PUT /api/ingredients/:id (ADMIN)
 // ----------------------------------------------------
 async function update(req, res, next) {
   const {
@@ -137,6 +147,7 @@ async function update(req, res, next) {
     lip_100g,
     prix_unitaire,
     allergenes,
+    image_url,
   } = req.body;
 
   try {
@@ -151,7 +162,8 @@ async function update(req, res, next) {
           prot_100g = COALESCE(?, prot_100g),
           gluc_100g = COALESCE(?, gluc_100g),
           lip_100g = COALESCE(?, lip_100g),
-          prix_unitaire = COALESCE(?, prix_unitaire)
+          prix_unitaire = COALESCE(?, prix_unitaire),
+          image_url = COALESCE(?, image_url)
       WHERE id = ?
     `,
       [
@@ -162,6 +174,7 @@ async function update(req, res, next) {
         gluc_100g,
         lip_100g,
         prix_unitaire,
+        image_url,
         req.params.id,
       ]
     );
@@ -171,7 +184,7 @@ async function update(req, res, next) {
       return res.status(404).json({ message: "Ingrédient introuvable" });
     }
 
-    // mettre à jour les allergènes
+    // Mise à jour allergènes
     if (Array.isArray(allergenes)) {
       await db.query(
         "DELETE FROM ingredient_allergene WHERE ingredient_id = ?",
@@ -194,7 +207,7 @@ async function update(req, res, next) {
 }
 
 // ----------------------------------------------------
-// DELETE /api/ingredients/:id
+// DELETE /api/ingredients/:id (ADMIN)
 // ----------------------------------------------------
 async function remove(req, res, next) {
   try {
@@ -202,9 +215,8 @@ async function remove(req, res, next) {
       req.params.id,
     ]);
 
-    if (result.affectedRows === 0) {
+    if (result.affectedRows === 0)
       return res.status(404).json({ message: "Ingrédient introuvable" });
-    }
 
     res.json({ message: "Ingrédient supprimé" });
   } catch (err) {
