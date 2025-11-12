@@ -1,10 +1,10 @@
 -- Active: 1762080270873@@127.0.0.1@3306@foodadvisor
 -- Étape 1 : Création / RéinitialisationDROP DATABASE IF EXISTS foodadvisor;
-DROP DATABASE IF EXISTS foodadvisor;
+DROP DATABASE IF EXISTS Projectfoodadvisor;
 
-CREATE DATABASE foodadvisor CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE Projectfoodadvisor CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE foodadvisor;
+USE Projectfoodadvisor;
 
 -- Désactivation temporaire des FK
 SET FOREIGN_KEY_CHECKS = 0;
