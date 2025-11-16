@@ -8,17 +8,19 @@ async function list(req, res, next) {
   try {
     const [rows] = await db.query(`
       SELECT r.id,
-             r.titre,
-             r.description,
-             r.image_url,
-             r.note_cache,
-             r.date_creation,
-             u.prenom AS auteur_prenom,
-             u.nom AS auteur_nom,
-             COUNT(ri.ingredient_id) AS nb_ingredients,
-             ROUND(AVG(a.note), 2) AS note_moyenne
-      FROM recette r
-      JOIN utilisateur u ON u.id = r.auteur_id
+       r.titre,
+       r.description,
+       r.image_url,
+       r.note_cache,
+       r.date_creation,
+       r.auteur_id,                     -- ✔ important
+       u.prenom AS auteur_prenom,
+       u.nom AS auteur_nom,
+       COUNT(ri.ingredient_id) AS nb_ingredients,
+       ROUND(AVG(a.note), 2) AS note_moyenne
+FROM recette r
+JOIN utilisateur u ON u.id = r.auteur_id
+
       LEFT JOIN recette_ingredient ri ON ri.recette_id = r.id
       LEFT JOIN avis a ON a.recette_id = r.id
       WHERE r.publie = 1
@@ -108,8 +110,14 @@ async function create(req, res, next) {
     return res.status(422).json({ errors: errors.array() });
   }
 
-  const { titre, description, image_url, personnes_defaut, ingredients, etapes } =
-    req.body;
+  const {
+    titre,
+    description,
+    image_url,
+    personnes_defaut,
+    ingredients,
+    etapes,
+  } = req.body;
 
   try {
     await db.query("START TRANSACTION");
@@ -120,7 +128,13 @@ async function create(req, res, next) {
       INSERT INTO recette (auteur_id, titre, description, image_url, personnes_defaut)
       VALUES (?, ?, ?, ?, COALESCE(?, 2))
     `,
-      [req.user.id, titre, description || null, image_url || null, personnes_defaut]
+      [
+        req.user.id,
+        titre,
+        description || null,
+        image_url || null,
+        personnes_defaut,
+      ]
     );
 
     const recetteId = result.insertId;
@@ -164,8 +178,14 @@ async function create(req, res, next) {
 // ----------------------------------------------------
 async function update(req, res, next) {
   const { id } = req.params;
-  const { titre, description, image_url, personnes_defaut, ingredients, etapes } =
-    req.body;
+  const {
+    titre,
+    description,
+    image_url,
+    personnes_defaut,
+    ingredients,
+    etapes,
+  } = req.body;
 
   try {
     await db.query("START TRANSACTION");
@@ -189,7 +209,9 @@ async function update(req, res, next) {
 
     // Mise à jour des ingrédients
     if (Array.isArray(ingredients)) {
-      await db.query("DELETE FROM recette_ingredient WHERE recette_id = ?", [id]);
+      await db.query("DELETE FROM recette_ingredient WHERE recette_id = ?", [
+        id,
+      ]);
       for (const ing of ingredients) {
         await db.query(
           `

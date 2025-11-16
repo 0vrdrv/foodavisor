@@ -13,6 +13,11 @@ const allergenesRoutes = require("./allergenes.routes");
 const etapesRoutes = require("./etapes.routes");
 const recommandationsRoutes = require("./recommandations.routes");
 const searchRoutes = require("./search.routes");
+const recettesIngredientsRoutes = require("./recettesIngredients.routes");
+const categoriesRoutes = require("./categories.routes");
+const unitesRoutes = require("./unites.routes");
+
+
 
 const router = express.Router();
 
@@ -30,6 +35,10 @@ router.use("/allergenes", allergenesRoutes);
 router.use("/etapes", etapesRoutes);
 router.use("/recommandations", recommandationsRoutes);
 router.use("/search", searchRoutes);
+router.use("/recettes-ingredients", recettesIngredientsRoutes);
+router.use("/categories", categoriesRoutes);
+router.use("/unites", unitesRoutes);
+
 
 
 module.exports = router;

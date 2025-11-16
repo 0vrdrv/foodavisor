@@ -15,7 +15,6 @@ router.get("/:id", authRequired, controller.getById);
 router.post(
   "/",
   authRequired,
-  requireRole("ADMIN"),
   [
     body("nom").notEmpty(),
     body("categorie_id").isInt(),

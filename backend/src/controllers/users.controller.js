@@ -22,6 +22,7 @@ async function list(req, res, next) {
 // ----------------------------------------------------
 async function getById(req, res, next) {
   const id = req.params.id;
+
   try {
     const [rows] = await db.query(
       `SELECT id, email, nom, prenom, date_naissance, ville, date_inscription, actif
@@ -29,6 +30,7 @@ async function getById(req, res, next) {
        WHERE id = ?`,
       [id]
     );
+
     if (rows.length === 0)
       return res.status(404).json({ message: "Utilisateur introuvable" });
 
@@ -54,8 +56,10 @@ async function getById(req, res, next) {
 // ----------------------------------------------------
 async function update(req, res, next) {
   const id = req.params.id;
+
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+  if (!errors.isEmpty())
+    return res.status(422).json({ errors: errors.array() });
 
   const { nom, prenom, date_naissance, ville, actif } = req.body;
 
@@ -92,14 +96,71 @@ async function update(req, res, next) {
 // ----------------------------------------------------
 async function remove(req, res, next) {
   const id = req.params.id;
+
   try {
-    const [result] = await db.query("DELETE FROM utilisateur WHERE id = ?", [id]);
+    const [result] = await db.query("DELETE FROM utilisateur WHERE id = ?", [
+      id,
+    ]);
+
     if (result.affectedRows === 0)
       return res.status(404).json({ message: "Utilisateur introuvable" });
+
     res.json({ message: "Utilisateur supprimé" });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { list, getById, update, remove };
+// ----------------------------------------------------
+// GET /users/me (USER)
+// ----------------------------------------------------
+async function getMe(req, res, next) {
+  const id = req.user.id;
+
+  try {
+    const [rows] = await db.query(
+      `SELECT id, email, nom, prenom, date_naissance, ville, date_inscription, actif
+       FROM utilisateur
+       WHERE id = ?`,
+      [id]
+    );
+
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ----------------------------------------------------
+// PUT /users/me (USER)
+// ----------------------------------------------------
+async function updateMe(req, res, next) {
+  const id = req.user.id;
+  const { nom, prenom, email, date_naissance, ville } = req.body;
+
+  try {
+    await db.query(
+      `UPDATE utilisateur 
+       SET nom = COALESCE(?, nom),
+           prenom = COALESCE(?, prenom),
+           email = COALESCE(?, email),
+           date_naissance = COALESCE(?, date_naissance),
+           ville = COALESCE(?, ville)
+       WHERE id = ?`,
+      [nom, prenom, email, date_naissance, ville, id]
+    );
+
+    res.json({ message: "Profil mis à jour" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  list,
+  getById,
+  update,
+  remove,
+  getMe,
+  updateMe,
+};

@@ -26,12 +26,11 @@ async function list(req, res, next) {
 async function getById(req, res, next) {
   try {
     const [rows] = await db.query(
-      `
-      SELECT i.*, c.libelle AS categorie
-      FROM ingredient i
-      JOIN categorie_ingredient c ON c.id = i.categorie_id
-      WHERE i.id = ?
-    `,
+      `SELECT i.*,
+          c.libelle AS categorie_libelle
+   FROM ingredient i
+   JOIN categorie_ingredient c ON c.id = i.categorie_id
+   WHERE i.id = ?`,
       [req.params.id]
     );
 
