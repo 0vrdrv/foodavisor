@@ -7,6 +7,9 @@ node_modules/
 backend/.env
 frontend/.env
 
+#db
+backend/database/db.sql
+
 # Build
 dist/
 build/

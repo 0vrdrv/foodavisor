@@ -22,7 +22,12 @@ DROP TRIGGER IF EXISTS trg_stock_au;
 
 DROP PROCEDURE IF EXISTS sp_cuire_recette;
 
-DROP TABLE IF EXISTS liste_course_item,
+DROP TABLE IF EXISTS 
+
+utilisateur_favori,
+utilisateur_aliment_exclu,
+utilisateur_allergie,
+liste_course_item,
 liste_course,
 avis,
 historique_cuisson,
@@ -266,6 +271,32 @@ CREATE TABLE liste_course_item (
     FOREIGN KEY (ingredient_id) REFERENCES ingredient (id),
     FOREIGN KEY (unite_code) REFERENCES unite (code)
 ) ENGINE = InnoDB;
+
+CREATE TABLE utilisateur_allergie (
+    utilisateur_id INT NOT NULL,
+    allergene_id INT NOT NULL,
+    PRIMARY KEY (utilisateur_id, allergene_id),
+    FOREIGN KEY (utilisateur_id) REFERENCES utilisateur(id) ON DELETE CASCADE,
+    FOREIGN KEY (allergene_id) REFERENCES allergene(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE utilisateur_aliment_exclu (
+    utilisateur_id INT NOT NULL,
+    ingredient_id INT NOT NULL,
+    PRIMARY KEY (utilisateur_id, ingredient_id),
+    FOREIGN KEY (utilisateur_id) REFERENCES utilisateur(id) ON DELETE CASCADE,
+    FOREIGN KEY (ingredient_id) REFERENCES ingredient(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE utilisateur_favori (
+    utilisateur_id INT NOT NULL,
+    recette_id INT NOT NULL,
+    PRIMARY KEY (utilisateur_id, recette_id),
+    FOREIGN KEY (utilisateur_id) REFERENCES utilisateur(id) ON DELETE CASCADE,
+    FOREIGN KEY (recette_id) REFERENCES recette(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+
 
 ALTER TABLE recette
 ADD COLUMN image_url VARCHAR(255) NULL AFTER description;

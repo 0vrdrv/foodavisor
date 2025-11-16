@@ -1,0 +1,696 @@
+{
+  "info": {
+    "name": "FoodAdvisor API",
+    "_postman_id": "foodadvisor-full-collection",
+    "description": "Collection complète FoodAdvisor incluant toutes les routes : Auth, Users, Ingredients, Allergènes, Recettes, Étapes, Recommandations, Recherche, Stocks, Listes, Avis, Cuissons, Statistiques, Préférences.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:4000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "AUTH",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@foodadvisor.local\",\n  \"password\": \"demo1234\",\n  \"nom\": \"Demo\",\n  \"prenom\": \"User\",\n  \"ville\": \"Paris\",\n  \"date_naissance\": \"2000-01-01\"\n}"
+            },
+            "url": "{{base_url}}/auth/register"
+          }
+        },
+        {
+          "name": "Login ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "try {",
+                  "  var data = pm.response.json();",
+                  "  if (data.token) { pm.environment.set('token', data.token); }",
+                  "} catch(e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@foodadvisor.local\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "try {",
+                  "  var data = pm.response.json();",
+                  "  if (data.token) { pm.environment.set('token', data.token); }",
+                  "} catch(e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@foodadvisor.local\",\n  \"password\": \"demo1234\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/auth/me"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "USERS (ADMIN)",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/users"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/users/1"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Updated\",\n  \"prenom\": \"User\",\n  \"ville\": \"Lyon\"\n}"
+            },
+            "url": "{{base_url}}/users/1"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/users/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "PREFERENCES UTILISATEUR",
+      "item": [
+        {
+          "name": "Get Preferences",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/preferences"
+          }
+        },
+        {
+          "name": "Update Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"allergies\": [1],\n  \"exclus\": [2, 3],\n  \"favoris\": [1, 5]\n}"
+            },
+            "url": "{{base_url}}/preferences"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "ALLERGENES",
+      "item": [
+        {
+          "name": "List Allergenes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/allergenes"
+          }
+        },
+        {
+          "name": "Create Allergene (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Lactose\"\n}"
+            },
+            "url": "{{base_url}}/allergenes"
+          }
+        },
+        {
+          "name": "Delete Allergene (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/allergenes/1"
+          }
+        },
+        {
+          "name": "Add Allergene to Ingredient",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"allergene_id\": 1\n}"
+            },
+            "url": "{{base_url}}/allergenes/ingredient/1"
+          }
+        },
+        {
+          "name": "Remove Allergene from Ingredient",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/allergenes/ingredient/1/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "INGREDIENTS",
+      "item": [
+        {
+          "name": "List Ingredients",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/ingredients"
+          }
+        },
+        {
+          "name": "Get Ingredient",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/ingredients/1"
+          }
+        },
+        {
+          "name": "Create Ingredient (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Tomate\",\n  \"categorie_id\": 1,\n  \"kcal_100g\": 18,\n  \"prot_100g\": 0.9,\n  \"gluc_100g\": 3.9,\n  \"lip_100g\": 0.2,\n  \"prix_unitaire\": 2.5,\n  \"image_url\": \"https://example.com/tomate.jpg\"\n}"
+            },
+            "url": "{{base_url}}/ingredients"
+          }
+        },
+        {
+          "name": "Update Ingredient (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prix_unitaire\": 3.2,\n  \"image_url\": \"https://example.com/tomate-bio.jpg\"\n}"
+            },
+            "url": "{{base_url}}/ingredients/1"
+          }
+        },
+        {
+          "name": "Delete Ingredient (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/ingredients/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "RECETTES",
+      "item": [
+        {
+          "name": "List Recettes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/recettes"
+          }
+        },
+        {
+          "name": "Get Recette",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/recettes/1"
+          }
+        },
+        {
+          "name": "Create Recette (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Pâtes Carbonara\",\n  \"description\": \"Recette italienne simple.\",\n  \"image_url\": \"https://example.com/carbo.jpg\",\n  \"personnes_defaut\": 2\n}"
+            },
+            "url": "{{base_url}}/recettes"
+          }
+        },
+        {
+          "name": "Update Recette (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Pâtes Carbonara Maison\",\n  \"description\": \"Meilleure recette mise à jour.\",\n  \"personnes_defaut\": 4\n}"
+            },
+            "url": "{{base_url}}/recettes/1"
+          }
+        },
+        {
+          "name": "Delete Recette (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/recettes/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "ETAPES RECETTE",
+      "item": [
+        {
+          "name": "Get Étapes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/etapes/1"
+          }
+        },
+        {
+          "name": "Create Étape (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ord\": 1,\n  \"description\": \"Faire bouillir l'eau.\"\n}"
+            },
+            "url": "{{base_url}}/etapes/1"
+          }
+        },
+        {
+          "name": "Update Étape (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Faire bouillir l'eau avec du sel.\"\n}"
+            },
+            "url": "{{base_url}}/etapes/1/1"
+          }
+        },
+        {
+          "name": "Delete Étape (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/etapes/1/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "RECOMMANDATIONS",
+      "item": [
+        {
+          "name": "Recommandations (simple)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/recommandations?stock_only=false&trier=note&limite=10"
+          }
+        },
+        {
+          "name": "Recommandations (stock_only)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/recommandations?stock_only=true"
+          }
+        },
+        {
+          "name": "Recommandations tri par coût",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/recommandations?trier=cout"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "RECHERCHE",
+      "item": [
+        {
+          "name": "Recherche par titre",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/search/recettes?titre=carbo"
+          }
+        },
+        {
+          "name": "Recherche coût max",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/search/recettes?cout_max=5"
+          }
+        },
+        {
+          "name": "Recherche kcal max",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/search/recettes?kcal_max=500"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "STOCKS",
+      "item": [
+        {
+          "name": "List Stock",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/stocks"
+          }
+        },
+        {
+          "name": "Get Stock Item",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/stocks/1"
+          }
+        },
+        {
+          "name": "Add Stock Movement - Ajout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ingredient_id\": 1,\n  \"delta\": 500,\n  \"unite_code\": \"g\",\n  \"raison\": \"ajout\"\n}"
+            },
+            "url": "{{base_url}}/stocks/mvt"
+          }
+        },
+        {
+          "name": "Add Stock Movement - Cuisson",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ingredient_id\": 1,\n  \"delta\": -150,\n  \"unite_code\": \"g\",\n  \"raison\": \"cuisson\"\n}"
+            },
+            "url": "{{base_url}}/stocks/mvt"
+          }
+        },
+        {
+          "name": "Update Stock Line",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantite\": 1.2,\n  \"unite_code\": \"kg\",\n  \"date_peremption\": \"2025-12-31\"\n}"
+            },
+            "url": "{{base_url}}/stocks/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "LISTES DE COURSES",
+      "item": [
+        {
+          "name": "List Lists",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/listes"
+          }
+        },
+        {
+          "name": "Get List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/listes/1"
+          }
+        },
+        {
+          "name": "Create List",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Courses semaine\",\n  \"recette_id\": 1\n}"
+            },
+            "url": "{{base_url}}/listes"
+          }
+        },
+        {
+          "name": "Add Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ingredient_id\": 1,\n  \"quantite\": 2,\n  \"unite_code\": \"piece\"\n}"
+            },
+            "url": "{{base_url}}/listes/1/item"
+          }
+        },
+        {
+          "name": "Remove Item",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/listes/1/item/1"
+          }
+        },
+        {
+          "name": "Delete List",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/listes/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AVIS",
+      "item": [
+        {
+          "name": "List Avis for Recette",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/avis/recette/1"
+          }
+        },
+        {
+          "name": "Create Avis",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": 5,\n  \"commentaire\": \"Excellent, une de mes recettes préférées !\"\n}"
+            },
+            "url": "{{base_url}}/avis/recette/1"
+          }
+        },
+        {
+          "name": "Update Avis",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": 4,\n  \"commentaire\": \"Très bon, mais un peu salé.\"\n}"
+            },
+            "url": "{{base_url}}/avis/recette/1"
+          }
+        },
+        {
+          "name": "Delete Avis",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/avis/recette/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "CUISSONS",
+      "item": [
+        {
+          "name": "List Cuissons",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/cuissons"
+          }
+        },
+        {
+          "name": "Cook Recette",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recette_id\": 1,\n  \"personnes\": 2\n}"
+            },
+            "url": "{{base_url}}/cuissons"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "STATS",
+      "item": [
+        {
+          "name": "Stats Utilisateur",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/stats/user"
+          }
+        },
+        {
+          "name": "Stats Globales (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/stats/global"
+          }
+        }
+      ]
+    }
+  ]
+}

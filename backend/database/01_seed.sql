@@ -3,7 +3,7 @@ INSERT INTO role (code) VALUES ('ADMIN'), ('USER')
 ON DUPLICATE KEY UPDATE code = VALUES(code);
 
 -- admin de base
-INSERT INTO utilisateur (email, hash_mdp, nom, prenom, age, ville, actif)
+INSERT INTO utilisateur (email, hash_mdp, nom, prenom, date_naissance, ville, actif)
 VALUES (
   'admin@foodadvisor.local',
   '$2b$10$U3yDqtE9nXlDZ4TlDsETX.RbKdPvXDBponNrFO0zHGTYWQnQDLGti', -- mdp = admin123

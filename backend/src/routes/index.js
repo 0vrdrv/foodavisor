@@ -8,9 +8,11 @@ const avisRoutes = require("./avis.routes");
 const cuissonsRoutes = require("./cuissons.routes");
 const listesRoutes = require("./listes.routes");
 const statsRoutes = require("./stats.routes");
-
-
-
+const preferencesRoutes = require("./preferences.routes");
+const allergenesRoutes = require("./allergenes.routes");
+const etapesRoutes = require("./etapes.routes");
+const recommandationsRoutes = require("./recommandations.routes");
+const searchRoutes = require("./search.routes");
 
 const router = express.Router();
 
@@ -23,6 +25,11 @@ router.use("/avis", avisRoutes);
 router.use("/cuissons", cuissonsRoutes);
 router.use("/listes", listesRoutes);
 router.use("/stats", statsRoutes);
+router.use("/preferences", preferencesRoutes);
+router.use("/allergenes", allergenesRoutes);
+router.use("/etapes", etapesRoutes);
+router.use("/recommandations", recommandationsRoutes);
+router.use("/search", searchRoutes);
 
 
 module.exports = router;
