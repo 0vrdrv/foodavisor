@@ -2,7 +2,7 @@ const { validationResult } = require("express-validator");
 const db = require("../config/db");
 
 // ----------------------------------------------------
-// GET /api/avis/recette/:recette_id
+// GET /avis/recette/:recette_id
 // ----------------------------------------------------
 async function listForRecipe(req, res, next) {
   try {
@@ -11,7 +11,7 @@ async function listForRecipe(req, res, next) {
     // Récupérer les avis avec l'auteur
     const [rows] = await db.query(
       `
-      SELECT a.id, a.note, a.commentaire, a.ts, 
+      SELECT a.id, a.note, a.utilisateur_id,a.commentaire, a.ts, 
              u.nom, u.prenom
       FROM avis a
       JOIN utilisateur u ON u.id = a.utilisateur_id
@@ -39,7 +39,7 @@ async function listForRecipe(req, res, next) {
 }
 
 // ----------------------------------------------------
-// POST /api/avis/recette/:recette_id
+// POST /avis/recette/:recette_id
 // ----------------------------------------------------
 async function create(req, res, next) {
   const errors = validationResult(req);
@@ -75,7 +75,7 @@ async function create(req, res, next) {
 }
 
 // ----------------------------------------------------
-// PUT /api/avis/recette/:recette_id
+// PUT /avis/recette/:recette_id
 // ----------------------------------------------------
 async function update(req, res, next) {
   const errors = validationResult(req);

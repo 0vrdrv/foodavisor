@@ -17,8 +17,9 @@ router.put(
     body("nom").optional().notEmpty(),
     body("prenom").optional().notEmpty(),
     body("email").optional().isEmail(),
-    body("ville").optional(),
+    body("ville").optional().isString(),
     body("date_naissance").optional().isDate(),
+    body("sexe").optional().isIn(["H", "F", "NB", "ND"]),
   ],
   controller.updateMe
 );
@@ -37,8 +38,9 @@ router.put(
   [
     body("nom").optional().notEmpty(),
     body("prenom").optional().notEmpty(),
-    body("ville").optional(),
+    body("ville").optional().isString(),
     body("date_naissance").optional().isDate(),
+    body("sexe").optional().isIn(["H", "F", "NB", "ND"]),
     body("actif").optional().isBoolean(),
   ],
   controller.update

@@ -71,6 +71,7 @@ CREATE TABLE utilisateur (
     hash_mdp VARCHAR(255) NOT NULL,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
+    sexe ENUM('H','F') NULL,
     date_naissance DATE NULL,
     ville VARCHAR(120),
     date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,

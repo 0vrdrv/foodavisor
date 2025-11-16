@@ -7,7 +7,15 @@ const db = require("../config/db");
 async function list(req, res, next) {
   try {
     const [rows] = await db.query(
-      `SELECT id, email, nom, prenom, date_naissance, ville, date_inscription, actif
+      `SELECT id,
+              email,
+              nom,
+              prenom,
+              sexe,
+              date_naissance,
+              ville,
+              date_inscription,
+              actif
        FROM utilisateur
        ORDER BY date_inscription DESC`
     );
@@ -25,7 +33,15 @@ async function getById(req, res, next) {
 
   try {
     const [rows] = await db.query(
-      `SELECT id, email, nom, prenom, date_naissance, ville, date_inscription, actif
+      `SELECT id,
+              email,
+              nom,
+              prenom,
+              sexe,
+              date_naissance,
+              ville,
+              date_inscription,
+              actif
        FROM utilisateur
        WHERE id = ?`,
       [id]
@@ -61,7 +77,7 @@ async function update(req, res, next) {
   if (!errors.isEmpty())
     return res.status(422).json({ errors: errors.array() });
 
-  const { nom, prenom, date_naissance, ville, actif } = req.body;
+  const { nom, prenom, date_naissance, ville, sexe, actif } = req.body;
 
   try {
     const [result] = await db.query(
@@ -70,6 +86,7 @@ async function update(req, res, next) {
            prenom = COALESCE(?, prenom),
            date_naissance = COALESCE(?, date_naissance),
            ville = COALESCE(?, ville),
+           sexe = COALESCE(?, sexe),
            actif = COALESCE(?, actif)
        WHERE id = ?`,
       [
@@ -77,6 +94,7 @@ async function update(req, res, next) {
         prenom,
         date_naissance,
         ville,
+        sexe,
         typeof actif === "boolean" ? (actif ? 1 : 0) : null,
         id,
       ]
@@ -119,7 +137,15 @@ async function getMe(req, res, next) {
 
   try {
     const [rows] = await db.query(
-      `SELECT id, email, nom, prenom, date_naissance, ville, date_inscription, actif
+      `SELECT id,
+              email,
+              nom,
+              prenom,
+              sexe,
+              date_naissance,
+              ville,
+              date_inscription,
+              actif
        FROM utilisateur
        WHERE id = ?`,
       [id]
@@ -136,7 +162,12 @@ async function getMe(req, res, next) {
 // ----------------------------------------------------
 async function updateMe(req, res, next) {
   const id = req.user.id;
-  const { nom, prenom, email, date_naissance, ville } = req.body;
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(422).json({ errors: errors.array() });
+
+  const { nom, prenom, email, date_naissance, ville, sexe } = req.body;
 
   try {
     await db.query(
@@ -145,9 +176,10 @@ async function updateMe(req, res, next) {
            prenom = COALESCE(?, prenom),
            email = COALESCE(?, email),
            date_naissance = COALESCE(?, date_naissance),
-           ville = COALESCE(?, ville)
+           ville = COALESCE(?, ville),
+           sexe = COALESCE(?, sexe)
        WHERE id = ?`,
-      [nom, prenom, email, date_naissance, ville, id]
+      [nom, prenom, email, date_naissance, ville, sexe, id]
     );
 
     res.json({ message: "Profil mis à jour" });

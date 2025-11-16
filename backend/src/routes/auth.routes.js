@@ -15,6 +15,7 @@ router.post(
     body("prenom").notEmpty(),
     body("date_naissance").optional().isDate(),
     body("ville").optional().isString(),
+    body("sexe").optional().isIn(["H", "F", "NB", "ND"]),
   ],
   controller.register
 );

@@ -16,8 +16,7 @@ const searchRoutes = require("./search.routes");
 const recettesIngredientsRoutes = require("./recettesIngredients.routes");
 const categoriesRoutes = require("./categories.routes");
 const unitesRoutes = require("./unites.routes");
-
-
+const regimesRoutes = require("./regimes.routes");
 
 const router = express.Router();
 
@@ -38,6 +37,8 @@ router.use("/search", searchRoutes);
 router.use("/recettes-ingredients", recettesIngredientsRoutes);
 router.use("/categories", categoriesRoutes);
 router.use("/unites", unitesRoutes);
+router.use("/regimes", regimesRoutes);
+
 
 
 

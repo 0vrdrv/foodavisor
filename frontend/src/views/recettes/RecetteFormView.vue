@@ -6,6 +6,17 @@
 
     <form @submit.prevent="submit" class="space-y-8">
 
+      <!-- Supprimer la recette -->
+      <div v-if="isEdit && (auth.isAdmin() || auth.user?.id === auteurId)" class="pt-2">
+        <button
+          type="button"
+          class="px-6 py-3 bg-red-600 hover:bg-red-500 rounded text-white font-medium"
+          @click="deleteRecette"
+        >
+          Supprimer la recette
+        </button>
+      </div>
+
       <!-- Infos générales -->
       <section class="space-y-4">
         <div>
@@ -15,7 +26,11 @@
 
         <div>
           <label class="form-label">Description</label>
-          <textarea v-model="form.description" class="form-input h-28" placeholder="Décris ta recette..."></textarea>
+          <textarea
+            v-model="form.description"
+            class="form-input h-28"
+            placeholder="Décris ta recette..."
+          ></textarea>
         </div>
       </section>
 
@@ -24,10 +39,11 @@
         <h2 class="text-lg font-semibold">Ingrédients</h2>
 
         <div class="space-y-2">
-          <div v-for="(ing, i) in ingredients" :key="i"
-            class="grid grid-cols-[1.5fr_0.5fr_0.5fr_auto] gap-2 items-center">
-
-            <!-- Sélection ingrédient -->
+          <div
+            v-for="(ing, i) in ingredients"
+            :key="i"
+            class="grid grid-cols-[1.5fr_0.5fr_0.5fr_auto] gap-2 items-center"
+          >
             <select v-model="ing.ingredient_id" class="form-input" required>
               <option disabled value="">Choisir un ingrédient...</option>
               <option v-for="opt in allIngredients" :key="opt.id" :value="opt.id">
@@ -35,7 +51,6 @@
               </option>
             </select>
 
-            <!-- Quantité -->
             <input
               v-model.number="ing.quantite"
               type="number"
@@ -46,7 +61,6 @@
               required
             />
 
-            <!-- Unité -->
             <select v-model="ing.unite_code" class="form-input w-28" required>
               <option disabled value="">Unité…</option>
               <option v-for="u in allUnits" :value="u.code" :key="u.code">
@@ -64,8 +78,11 @@
           </div>
         </div>
 
-        <button type="button" class="mt-2 bg-slate-800 hover:bg-slate-700 text-sm px-4 py-2 rounded"
-          @click="addIngredient">
+        <button
+          type="button"
+          class="mt-2 bg-slate-800 hover:bg-slate-700 text-sm px-4 py-2 rounded"
+          @click="addIngredient"
+        >
           + Ajouter un ingrédient
         </button>
       </section>
@@ -75,9 +92,17 @@
         <h2 class="text-lg font-semibold">Étapes</h2>
 
         <div class="space-y-2">
-          <div v-for="(et, i) in etapes" :key="i" class="grid grid-cols-[1fr_auto] gap-2 items-start">
-            <textarea v-model="et.description" class="form-input h-20" placeholder="Décris l’étape..."
-              required></textarea>
+          <div
+            v-for="(et, i) in etapes"
+            :key="i"
+            class="grid grid-cols-[1fr_auto] gap-2 items-start"
+          >
+            <textarea
+              v-model="et.description"
+              class="form-input h-20"
+              placeholder="Décris l’étape..."
+              required
+            ></textarea>
 
             <button
               type="button"
@@ -89,7 +114,11 @@
           </div>
         </div>
 
-        <button type="button" class="mt-2 bg-slate-800 hover:bg-slate-700 text-sm px-4 py-2 rounded" @click="addEtape">
+        <button
+          type="button"
+          class="mt-2 bg-slate-800 hover:bg-slate-700 text-sm px-4 py-2 rounded"
+          @click="addEtape"
+        >
           + Ajouter une étape
         </button>
       </section>
@@ -109,6 +138,11 @@
 import api from "../../services/api";
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { showToast } from "../../services/toast";
+import { useAuthStore } from "../../services/store";
+
+const auth = useAuthStore();
+const auteurId = ref(null);
 
 const route = useRoute();
 const router = useRouter();
@@ -127,6 +161,19 @@ const ingredients = ref([]);
 const etapes = ref([]);
 const allUnits = ref([]);
 
+const deleteRecette = async () => {
+  if (!confirm("Supprimer définitivement cette recette ?")) return;
+
+  try {
+    await api.delete(`/recettes/${route.params.id}`);
+    showToast("Recette supprimée !");
+    router.push("/recettes");
+  } catch (err) {
+    console.error(err);
+    showToast("Erreur lors de la suppression", "error");
+  }
+};
+
 const loadUnits = async () => {
   const { data } = await api.get("/unites");
   allUnits.value = data;
@@ -141,6 +188,8 @@ const loadRecette = async () => {
   if (!isEdit.value) return;
 
   const { data } = await api.get(`/recettes/${route.params.id}`);
+
+  auteurId.value = data.auteur_id;
 
   form.value = {
     titre: data.titre,
@@ -202,19 +251,20 @@ const submit = async () => {
     etapes: etapes.value,
   };
 
-  let id;
+  try {
+    if (!isEdit.value) {
+      const { data } = await api.post("/recettes", payload);
+      showToast("Recette créée !");
+    } else {
+      await api.put(`/recettes/${route.params.id}`, payload);
+      showToast("Recette modifiée !");
+    }
 
-  if (!isEdit.value) {
-    const { data } = await api.post("/recettes", payload);
-    id = data.id;
-    showToast("Recette créée !");
-  } else {
-    id = route.params.id;
-    await api.put(`/recettes/${id}`, payload);
-    showToast("Recette modifiée !");
+    router.push("/recettes");
+  } catch (err) {
+    console.error(err);
+    showToast("Erreur lors de l’enregistrement", "error");
   }
-
-  router.push("/recettes");
 };
 
 onMounted(async () => {

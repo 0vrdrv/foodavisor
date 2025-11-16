@@ -30,8 +30,7 @@
       </div>
 
       <!-- Nutrition -->
-      <h2 class="text-lg font-medium">Valeurs nutritionnelles (pour 100
-      g)</h2>
+      <h2 class="text-lg font-medium">Valeurs nutritionnelles (pour 100 g)</h2>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
@@ -58,19 +57,13 @@
 
         <div class="flex flex-wrap gap-2 max-w-md">
           <label v-for="al in allergenesList" :key="al.id" class="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              :value="al.id"
-              v-model="selectedAllergenes"
-            />
+            <input type="checkbox" :value="al.id" v-model="selectedAllergenes" />
             {{ al.libelle }}
           </label>
         </div>
       </div>
 
-      <button
-        class="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 rounded text-slate-900"
-      >
+      <button class="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 rounded text-slate-900">
         {{ isEdit ? "Modifier" : "Créer" }}
       </button>
 
@@ -83,9 +76,9 @@ import api from "../../services/api";
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../../services/store";
-import { useToast } from "../../composables/useToast";
-
+import { useToast } from "../../composables/useToast"; // GOOD
 const { showToast } = useToast();
+
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
@@ -130,6 +123,17 @@ const loadIngredient = async () => {
 
 const submit = async () => {
   try {
+    // --- VALIDATION MANUELLE ---
+    if (!form.value.nom.trim()) {
+      showToast("Le nom est obligatoire !");
+      return;
+    }
+
+    if (!form.value.categorie_id) {
+      showToast("Sélectionne une catégorie !");
+      return;
+    }
+
     let id = route.params.id;
 
     if (isEdit.value) {
@@ -141,6 +145,7 @@ const submit = async () => {
       showToast("Ingrédient créé !");
     }
 
+    // --- Allergènes (admin uniquement) ---
     if (auth.isAdmin()) {
       await api.delete(`/allergenes/ingredient/${id}/all`).catch(() => {});
 

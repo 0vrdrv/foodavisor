@@ -29,4 +29,5 @@ router.put(
 
 router.delete("/recette/:recette_id", authRequired, controller.remove);
 
+
 module.exports = router;

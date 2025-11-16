@@ -10,7 +10,15 @@ async function register(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
-  const { email, password, nom, prenom, date_naissance, ville } = req.body;
+  const {
+    email,
+    password,
+    nom,
+    prenom,
+    date_naissance,
+    ville,
+    sexe,
+  } = req.body;
 
   try {
     const [exists] = await db.query("SELECT id FROM utilisateur WHERE email = ?", [email]);
@@ -20,9 +28,17 @@ async function register(req, res, next) {
     const hashed = await hashPassword(password);
 
     const [result] = await db.query(
-      `INSERT INTO utilisateur (email, hash_mdp, nom, prenom, date_naissance, ville)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [email, hashed, nom, prenom, date_naissance ?? null, ville ?? null]
+      `INSERT INTO utilisateur (email, hash_mdp, nom, prenom, sexe, date_naissance, ville)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        email,
+        hashed,
+        nom,
+        prenom,
+        sexe ?? null,
+        date_naissance ?? null,
+        ville ?? null,
+      ]
     );
 
     const userId = result.insertId;
@@ -44,8 +60,9 @@ async function register(req, res, next) {
         email,
         nom,
         prenom,
-        date_naissance,
-        ville,
+        sexe: sexe ?? null,
+        date_naissance: date_naissance ?? null,
+        ville: ville ?? null,
         roles: ["USER"],
       },
     });
@@ -65,7 +82,9 @@ async function login(req, res, next) {
 
   try {
     const [rows] = await db.query(
-      "SELECT id, email, hash_mdp, nom, prenom, actif FROM utilisateur WHERE email = ?",
+      `SELECT id, email, hash_mdp, nom, prenom, sexe, date_naissance, ville, actif
+       FROM utilisateur
+       WHERE email = ?`,
       [email]
     );
 
@@ -97,6 +116,9 @@ async function login(req, res, next) {
         email: user.email,
         nom: user.nom,
         prenom: user.prenom,
+        sexe: user.sexe,
+        date_naissance: user.date_naissance,
+        ville: user.ville,
         roles: roleRows.map((r) => r.code),
       },
     });
@@ -123,6 +145,9 @@ async function me(req, res, next) {
       email: req.user.email,
       nom: req.user.nom,
       prenom: req.user.prenom,
+      sexe: req.user.sexe,
+      date_naissance: req.user.date_naissance,
+      ville: req.user.ville,
       roles: req.user.roles,
       regimes,
     });
