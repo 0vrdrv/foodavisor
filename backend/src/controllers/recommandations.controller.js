@@ -1,85 +1,136 @@
 const db = require("../config/db");
 
-exports.recommander = async (req, res) => {
+/**
+ * GET /recommandations
+ *
+ * Query params :
+ *  - stock_only=1
+ *  - order=note|cout|recent
+ */
+async function list(req, res, next) {
   const userId = req.user.id;
-  const { stock_only = false, trier = "note", limite = 10 } = req.query;
+  const { stock_only, order } = req.query;
 
-  // Allergies utilisateur
-  const [userAllergies] = await db.query(
-    `SELECT allergene_id FROM utilisateur_allergie WHERE utilisateur_id = ?`,
-    [userId]
-  );
+  try {
+    // Charger préférences utilisateur
+    const [allergiesRows] = await db.query(
+      "SELECT allergene_id FROM utilisateur_allergie WHERE utilisateur_id = ?",
+      [userId]
+    );
+    const [exclusRows] = await db.query(
+      "SELECT ingredient_id FROM utilisateur_aliment_exclu WHERE utilisateur_id = ?",
+      [userId]
+    );
 
-  // Aliments exclus
-  const [userExclusions] = await db.query(
-    `SELECT ingredient_id FROM utilisateur_aliment_exclu WHERE utilisateur_id = ?`,
-    [userId]
-  );
+    const allergies = allergiesRows.map(a => a.allergene_id);
+    const ingredientsExclus = exclusRows.map(e => e.ingredient_id);
 
-  // Dernière recette réalisée
-  const [lastCook] = await db.query(
-    `SELECT recette_id FROM historique_cuisson WHERE utilisateur_id = ? ORDER BY ts DESC LIMIT 1`,
-    [userId]
-  );
+    //
+    // ----- Construction dynamique du WHERE -----
+    //
+    let where = "WHERE r.publie = 1";
+    const params = [];
 
-  const allergiesIds = userAllergies.map(a => a.allergene_id);
-  const exclusionIds = userExclusions.map(e => e.ingredient_id);
-  const lastRecetteId = lastCook[0]?.recette_id || null;
+    // Allergies
+    if (allergies.length > 0) {
+      where += `
+        AND NOT EXISTS (
+          SELECT 1
+          FROM recette_ingredient ri
+          JOIN ingredient_allergene ia ON ia.ingredient_id = ri.ingredient_id
+          WHERE ri.recette_id = r.id
+            AND ia.allergene_id IN (${allergies.map(() => "?").join(",")})
+        )
+      `;
+      params.push(...allergies);
+    }
 
-  let query = `
-      SELECT r.id, r.titre, r.description,
-             v.note_moy, c.cout_estime
+    // Aliments exclus
+    if (ingredientsExclus.length > 0) {
+      where += `
+        AND NOT EXISTS (
+          SELECT 1
+          FROM recette_ingredient ri
+          WHERE ri.recette_id = r.id
+            AND ri.ingredient_id IN (${ingredientsExclus
+              .map(() => "?")
+              .join(",")})
+        )
+      `;
+      params.push(...ingredientsExclus);
+    }
+
+    // Seulement réalisables avec stock
+    if (stock_only === "1") {
+      where += `
+        AND NOT EXISTS (
+          SELECT 1
+          FROM recette_ingredient ri
+          LEFT JOIN stock s
+            ON s.ingredient_id = ri.ingredient_id
+           AND s.utilisateur_id = ?
+          WHERE ri.recette_id = r.id
+            AND (s.ingredient_id IS NULL OR s.quantite < ri.quantite)
+        )
+      `;
+      params.push(userId);
+    }
+
+    //
+    // ----- Tri -----
+    //
+    let orderBy = "ORDER BY r.date_creation DESC";
+
+    if (order === "note") {
+      orderBy = `
+        ORDER BY
+          note_moyenne IS NULL,
+          note_moyenne DESC,
+          r.date_creation DESC
+      `;
+    }
+
+    if (order === "cout") {
+      orderBy = `
+        ORDER BY
+          r.cout_cache IS NULL,
+          r.cout_cache ASC
+      `;
+    }
+
+    //
+    // ----- Requête finale -----
+    //
+    const [rows] = await db.query(
+      `
+      SELECT
+        r.id,
+        r.titre,
+        r.description,
+        r.image_url,
+        r.cout_cache,
+        r.personnes_defaut,
+        u.prenom AS auteur_prenom,
+        u.nom AS auteur_nom,
+        COUNT(DISTINCT ri.ingredient_id) AS nb_ingredients,
+        ROUND(AVG(a.note), 2) AS note_moyenne
       FROM recette r
-        LEFT JOIN v_recette_note v ON v.recette_id = r.id
-        LEFT JOIN v_cout_recette c ON c.recette_id = r.id
-      WHERE r.publie = 1
-  `;
+      JOIN utilisateur u ON u.id = r.auteur_id
+      LEFT JOIN recette_ingredient ri ON ri.recette_id = r.id
+      LEFT JOIN avis a ON a.recette_id = r.id
+      ${where}
+      GROUP BY r.id
+      ${orderBy}
+      LIMIT 100
+    `,
+      params
+    );
 
-  // Exclusion recette cuisinée récemment
-  if (lastRecetteId) query += ` AND r.id <> ${lastRecetteId} `;
+    res.json(rows);
 
-  // Exclusion allergènes
-  if (allergiesIds.length > 0) {
-    query += `
-      AND r.id NOT IN (
-        SELECT recette_id
-        FROM recette_ingredient ri
-        JOIN ingredient_allergene ia ON ia.ingredient_id = ri.ingredient_id
-        WHERE ia.allergene_id IN (${allergiesIds.join(",")})
-      )
-    `;
+  } catch (err) {
+    next(err);
   }
+}
 
-  // Exclusion aliments interdits
-  if (exclusionIds.length > 0) {
-    query += `
-      AND r.id NOT IN (
-        SELECT recette_id
-        FROM recette_ingredient
-        WHERE ingredient_id IN (${exclusionIds.join(",")})
-      )
-    `;
-  }
-
-  // Filtre “réalisable avec stock”
-  if (stock_only === "true") {
-    query += `
-      AND r.id NOT IN (
-        SELECT ri.recette_id
-        FROM recette_ingredient ri
-        JOIN stock s ON s.ingredient_id = ri.ingredient_id
-                     AND s.utilisateur_id = ${userId}
-        WHERE s.quantite < ri.quantite
-      )
-    `;
-  }
-
-  // Tri
-  if (trier === "cout") query += ` ORDER BY c.cout_estime ASC `;
-  else query += ` ORDER BY v.note_moy DESC `;
-
-  query += ` LIMIT ${limite} `;
-
-  const [rows] = await db.query(query);
-  res.json(rows);
-};
+module.exports = { list };

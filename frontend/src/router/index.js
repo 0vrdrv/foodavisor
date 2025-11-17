@@ -139,7 +139,16 @@ const routes = [
   },
 
   // Stocks
-  { path: '/stocks', name: 'stocks', component: StocksView, meta: { requiresAuth: true } },
+  {
+    path: '/stocks',
+    name: 'stocks',
+    component: () => import('../views/stocks/StocksView.vue'),
+  },
+  {
+    path: '/stocks/:ingredientId',
+    name: 'stock-detail',
+    component: () => import('../views/stocks/StockDetailView.vue'),
+  },
 
   // Listes de courses
   { path: '/listes', name: 'listes', component: ListesCoursesView, meta: { requiresAuth: true } },

@@ -12,26 +12,38 @@ router.post(
   authRequired,
   ownerOrAdmin,
   [
-    body("ingredient_id").isInt(),
-    body("quantite").isFloat({ gt: 0 }),
-    body("unite_code").isString().notEmpty(),
+    body("ingredient_id")
+      .isInt({ min: 1 })
+      .withMessage("ingredient_id invalide."),
+    body("quantite")
+      .isFloat({ gt: 0 })
+      .withMessage("La quantité doit être > 0."),
+    body("unite_code")
+      .isString()
+      .notEmpty()
+      .withMessage("unite_code manquant."),
   ],
   controller.add
 );
 
-// Modifier un ingrédient de recette
+// Modifier un ingrédient d’une recette
 router.put(
   "/:recette_id/:ingredient_id",
   authRequired,
   ownerOrAdmin,
   [
-    body("quantite").optional().isFloat({ gt: 0 }),
-    body("unite_code").optional().isString(),
+    body("quantite")
+      .optional()
+      .isFloat({ gt: 0 })
+      .withMessage("La quantité doit être > 0."),
+    body("unite_code")
+      .optional()
+      .isString()
+      .notEmpty(),
   ],
   controller.update
 );
 
-// Supprimer un ingrédient
 router.delete(
   "/:recette_id/:ingredient_id",
   authRequired,

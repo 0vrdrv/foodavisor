@@ -20,7 +20,7 @@
         class="flex items-center px-5 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400 transition-colors"
         :class="{ 'bg-slate-800 text-emerald-400': isActive(item.to) }"
       >
-        <item.icon class="w-4 h-4 mr-3" />
+        <component :is="item.icon" class="w-4 h-4 mr-3" />
         {{ item.label }}
       </RouterLink>
 
@@ -35,7 +35,7 @@
           class="flex items-center px-5 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400 transition-colors"
           :class="{ 'bg-slate-800 text-emerald-400': isActive(item.to) }"
         >
-          <item.icon class="w-4 h-4 mr-3" />
+          <component :is="item.icon" class="w-4 h-4 mr-3" />
           {{ item.label }}
         </RouterLink>
       </div>
@@ -52,7 +52,6 @@
 import { useAuthStore } from "../../services/store";
 import { useRoute } from "vue-router";
 
-// Icônes propres (Lucide)
 import {
   Home,
   Search,
@@ -82,14 +81,12 @@ const menu = [
   { label: "Listes de courses", to: "/listes", icon: BookmarkCheck },
   { label: "Cuissons", to: "/cuissons", icon: Flame },
   { label: "Mes stats", to: "/stats", icon: BarChart2 },
-  // { label: "Préférences", to: "/preferences", icon: Settings },
+  { label: "Préférences", to: "/preferences", icon: Settings },
 ];
-
 
 const adminMenu = [
   { label: "Utilisateurs", to: "/admin/users", icon: Users },
   { label: "Allergènes", to: "/allergenes", icon: ListChecks },
   { label: "Stats globales", to: "/stats/global", icon: BarChart2 },
 ];
-
 </script>

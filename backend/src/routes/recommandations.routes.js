@@ -4,6 +4,6 @@ const controller = require("../controllers/recommandations.controller");
 
 const router = express.Router();
 
-router.get("/", authRequired, controller.recommander);
+router.get("/", authRequired, controller.list);
 
 module.exports = router;

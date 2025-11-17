@@ -13,7 +13,16 @@
 
     <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div v-for="r in recettes" :key="r.id" class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-        <h2 class="text-lg font-semibold">{{ r.titre }}</h2>
+        <div class="flex justify-between items-start">
+          <h2 class="text-lg font-semibold">{{ r.titre }}</h2>
+
+          <!-- Favori -->
+          <button v-if="auth.isAuthenticated()" @click.stop="toggleFavorite(r.id)" class="text-xl">
+            <span v-if="isFavorite(r.id)" class="text-yellow-400">★</span>
+            <span v-else class="text-slate-500 hover:text-yellow-400">☆</span>
+          </button>
+
+        </div>
 
         <p class="text-sm text-slate-400 mt-1">{{ r.description }}</p>
 
@@ -32,11 +41,9 @@
             @click="$router.push({ name: 'recette-edit', params: { id: r.id } })">
             Modifier
           </button>
-
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -44,6 +51,7 @@
 import api from "../../services/api";
 import { ref, onMounted } from "vue";
 import { useAuthStore } from "../../services/store";
+import { isFavorite, toggleFavorite } from "../../services/preferences";
 
 const auth = useAuthStore();
 const recettes = ref([]);

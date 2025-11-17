@@ -331,3 +331,53 @@ exports.removeFavori = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.updateAllPreferences = async (req, res, next) => {
+  const userId = req.user.id;
+  const { allergies = [], exclus = [], favoris = [] } = req.body;
+
+  try {
+    await db.query("START TRANSACTION");
+
+    await db.query(
+      `DELETE FROM utilisateur_allergie WHERE utilisateur_id = ?`,
+      [userId]
+    );
+    for (const id of allergies) {
+      await db.query(
+        `INSERT INTO utilisateur_allergie (utilisateur_id, allergene_id)
+         VALUES (?, ?)`,
+        [userId, id]
+      );
+    }
+
+    await db.query(
+      `DELETE FROM utilisateur_aliment_exclu WHERE utilisateur_id = ?`,
+      [userId]
+    );
+    for (const id of exclus) {
+      await db.query(
+        `INSERT INTO utilisateur_aliment_exclu (utilisateur_id, ingredient_id)
+         VALUES (?, ?)`,
+        [userId, id]
+      );
+    }
+
+    await db.query(`DELETE FROM utilisateur_favori WHERE utilisateur_id = ?`, [
+      userId,
+    ]);
+    for (const id of favoris) {
+      await db.query(
+        `INSERT INTO utilisateur_favori (utilisateur_id, recette_id)
+         VALUES (?, ?)`,
+        [userId, id]
+      );
+    }
+
+    await db.query("COMMIT");
+    res.json({ message: "Préférences mises à jour" });
+  } catch (err) {
+    await db.query("ROLLBACK");
+    next(err);
+  }
+};

@@ -1,101 +1,65 @@
 const express = require("express");
 const { body } = require("express-validator");
-const { authRequired } = require("../middlewares/auth");
 const controller = require("../controllers/preferences.controller");
+const { authRequired } = require("../middlewares/auth");
 
 const router = express.Router();
 
-// --------------------------------------------------
-// Vue globale de toutes les préférences
-// --------------------------------------------------
+// ---- ROUTE PRINCIPALE (front toggleFavorite utilise celle-ci) ----
 router.get("/", authRequired, controller.getAllPreferences);
+router.put("/", authRequired, controller.updateAllPreferences);
 
-// --------------------------------------------------
-// Informations générales (ville, date_naissance, sexe)
-// --------------------------------------------------
+// ---- Informations générales ----
 router.get("/general", authRequired, controller.getGeneral);
-
 router.put(
   "/general",
   authRequired,
   [
     body("ville").optional().isString(),
-    body("date_naissance").optional().isDate(),
-    body("sexe").optional().isIn(["H", "F", "NB", "ND"]),
+    body("date_naissance").optional().isISO8601(),
+    body("sexe").optional().isString(),
   ],
   controller.updateGeneral
 );
 
-// --------------------------------------------------
-// Allergies
-// --------------------------------------------------
+// ---- Allergies ----
 router.get("/allergies", authRequired, controller.getAllergies);
-
 router.post(
   "/allergies",
   authRequired,
   [body("allergene_id").isInt()],
   controller.addAllergie
 );
+router.delete("/allergies/:allergene_id", authRequired, controller.removeAllergie);
 
-router.delete(
-  "/allergies/:allergene_id",
-  authRequired,
-  controller.removeAllergie
-);
-
-// --------------------------------------------------
-// Régimes alimentaires
-// --------------------------------------------------
+// ---- Régimes ----
 router.get("/regimes", authRequired, controller.getRegimes);
-
 router.post(
   "/regimes",
   authRequired,
   [body("regime_id").isInt()],
   controller.addRegime
 );
+router.delete("/regimes/:regime_id", authRequired, controller.removeRegime);
 
-router.delete(
-  "/regimes/:regime_id",
-  authRequired,
-  controller.removeRegime
-);
-
-// --------------------------------------------------
-// Aliments exclus
-// --------------------------------------------------
+// ---- Aliments exclus ----
 router.get("/exclus", authRequired, controller.getExclusions);
-
 router.post(
   "/exclus",
   authRequired,
   [body("ingredient_id").isInt()],
   controller.addExclusion
 );
+router.delete("/exclus/:ingredient_id", authRequired, controller.removeExclusion);
 
-router.delete(
-  "/exclus/:ingredient_id",
-  authRequired,
-  controller.removeExclusion
-);
-
-// --------------------------------------------------
-// Favoris recettes
-// --------------------------------------------------
+// ---- Favoris ----
 router.get("/favoris", authRequired, controller.getFavoris);
-
 router.post(
   "/favoris",
   authRequired,
   [body("recette_id").isInt()],
   controller.addFavori
 );
-
-router.delete(
-  "/favoris/:recette_id",
-  authRequired,
-  controller.removeFavori
-);
+router.delete("/favoris/:recette_id", authRequired, controller.removeFavori);
 
 module.exports = router;
