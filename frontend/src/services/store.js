@@ -1,5 +1,6 @@
 import { reactive } from "vue";
 import api from "./api";
+import { loadUserPreferences } from "./preferences";
 
 const state = reactive({
   user: null,
@@ -8,7 +9,6 @@ const state = reactive({
 
 export function useAuthStore() {
   return {
-    // état
     get user() {
       return state.user;
     },
@@ -16,7 +16,6 @@ export function useAuthStore() {
       return state.token;
     },
 
-    // méthode centrale pour mettre à jour auth
     setAuth(token, user) {
       state.token = token;
       state.user = user;
@@ -28,17 +27,22 @@ export function useAuthStore() {
       }
     },
 
-    // login classique
     async login(email, password) {
       const { data } = await api.post("/auth/login", { email, password });
       this.setAuth(data.token, data.user);
+
+      // 🔥 charger immédiatement les préférences
+      await loadUserPreferences();
     },
 
-    // récup /auth/me au démarrage
     async fetchMe() {
       if (!state.token) return;
+
       const { data } = await api.get("/auth/me");
       state.user = data;
+
+      // 🔥 charge aussi les prefs au démarrage
+      await loadUserPreferences();
     },
 
     logout() {
